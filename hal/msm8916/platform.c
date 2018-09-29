@@ -520,37 +520,13 @@ static struct name_to_index usecase_name_index[AUDIO_USECASE_MAX] = {
 #define DEEP_BUFFER_PLATFORM_DELAY (29*1000LL)
 #define LOW_LATENCY_PLATFORM_DELAY (13*1000LL)
 
-// Treblized config files will be located in /odm/etc or /vendor/etc.
-static const char *kConfigLocationList[] =
-        {"/odm/etc", "/vendor/etc", "/system/etc"};
-static const int kConfigLocationListSize =
-        (sizeof(kConfigLocationList) / sizeof(kConfigLocationList[0]));
-
-void resolveConfigFile(char file_name[MIXER_PATH_MAX_LENGTH], char *full_config_path) {
-    char temp_config_path[MIXER_PATH_MAX_LENGTH];
-    for (int i = 0; i < kConfigLocationListSize; i++) {
-        snprintf(temp_config_path,
-                 MIXER_PATH_MAX_LENGTH,
-                 "%s/%s",
-                 kConfigLocationList[i],
-                 file_name);
-        if (F_OK == access(temp_config_path, 0)) {
-            strcpy(full_config_path, temp_config_path);
-            return;
-        }
-    }
-    // if no file was found, copy file_name to full_config_path
-    // that way, crashes due to empty full_config_path are avoided
-    strcpy(full_config_path, file_name);
-    ALOGE("%s: could not find the file %s under any valid location!", __func__, file_name);
-}
-
 static void query_platform(const char *snd_card_name,
                                       char *mixer_xml_path)
 {
     if (!strncmp(snd_card_name, "msm8x16-snd-card-mtp",
                  sizeof("msm8x16-snd-card-mtp"))) {
-        resolveConfigFile(MIXER_XML_PATH_MTP, mixer_xml_path);
+        strlcpy(mixer_xml_path, MIXER_XML_PATH_MTP,
+                sizeof(MIXER_XML_PATH_MTP));
     } else if (!strncmp(snd_card_name, "msm8909-pm8916-snd-card",
                  sizeof("msm8909-pm8916-snd-card"))) {
         strlcpy(mixer_xml_path, MIXER_XML_PATH_MSM8909_PM8916,
@@ -561,12 +537,15 @@ static void query_platform(const char *snd_card_name,
                 sizeof(MIXER_XML_PATH_BG));
     } else if (!strncmp(snd_card_name, "msm8952-snd-card-mtp",
                  sizeof("msm8952-snd-card-mtp"))) {
-        resolveConfigFile(MIXER_XML_PATH_MTP, mixer_xml_path);
+        strlcpy(mixer_xml_path, MIXER_XML_PATH_MTP,
+                sizeof(MIXER_XML_PATH_MTP));
     } else if (!strncmp(snd_card_name, "msm8952-l9300-snd-card",
                  sizeof("msm8952-l9300-snd-card"))) {
-        resolveConfigFile(MIXER_XML_PATH_L9300, mixer_xml_path);
+        strlcpy(mixer_xml_path, MIXER_XML_PATH_L9300,
+                sizeof(MIXER_XML_PATH_L9300));
     } else {
-        resolveConfigFile(MIXER_XML_PATH, mixer_xml_path);
+        strlcpy(mixer_xml_path, MIXER_XML_PATH,
+                sizeof(MIXER_XML_PATH));
     }
 }
 
