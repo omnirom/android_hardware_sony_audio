@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "msm8974_platform"
 /*#define LOG_NDEBUG 0*/
+#define LOG_NDDEBUG 0
 
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -194,8 +195,6 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
                               AUDIO_RECORD_PCM_DEVICE},
     [USECASE_AUDIO_RECORD_LOW_LATENCY] = {LOWLATENCY_PCM_DEVICE,
                                           LOWLATENCY_PCM_DEVICE},
-    [USECASE_AUDIO_RECORD_FM_VIRTUAL] = {MULTIMEDIA2_PCM_DEVICE,
-                                  MULTIMEDIA2_PCM_DEVICE},
 
     [USECASE_AUDIO_RECORD_MMAP] = {MMAP_RECORD_PCM_DEVICE,
             MMAP_RECORD_PCM_DEVICE},
@@ -317,7 +316,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_BT_SCO_MIC_NREC] = "bt-sco-mic",
     [SND_DEVICE_IN_BT_SCO_MIC_WB] = "bt-sco-mic-wb",
     [SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = "bt-sco-mic-wb",
-    [SND_DEVICE_IN_CAMCORDER_MIC] = "camcorder-mic",
+    [SND_DEVICE_IN_CAMCORDER_LANDSCAPE] = "camcorder-mic",
 
     [SND_DEVICE_IN_VOICE_DMIC] = "voice-dmic-ef",
     [SND_DEVICE_IN_VOICE_DMIC_TMUS] = "voice-dmic-ef-tmus",
@@ -359,8 +358,11 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_HANDSET_QMIC] = "quad-mic",
     [SND_DEVICE_IN_HANDSET_TMIC_AEC] = "three-mic",
     [SND_DEVICE_IN_HANDSET_QMIC_AEC] = "quad-mic",
-
-    [SND_DEVICE_IN_CAPTURE_FM] = "capture-fm",
+    [SND_DEVICE_IN_CAMCORDER_INVERT_LANDSCAPE] = "camcorder-mic",
+    [SND_DEVICE_IN_CAMCORDER_PORTRAIT] = "camcorder-mic",
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE] = "camcorder-mic",
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE] = "camcorder-mic",
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT] = "camcorder-mic",
 };
 
 /* ACDB IDs (audio DSP path configuration IDs) for each sound device */
@@ -437,7 +439,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_BT_SCO_MIC_NREC] = 21,
     [SND_DEVICE_IN_BT_SCO_MIC_WB] = 38,
     [SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = 38,
-    [SND_DEVICE_IN_CAMCORDER_MIC] = 61,
+    [SND_DEVICE_IN_CAMCORDER_LANDSCAPE] = 61,
 
     [SND_DEVICE_IN_VOICE_DMIC] = 41,
     [SND_DEVICE_IN_VOICE_DMIC_TMUS] = ACDB_ID_VOICE_DMIC_EF_TMUS,
@@ -466,7 +468,6 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_UNPROCESSED_QUAD_MIC] = 125,
 
     [SND_DEVICE_IN_VOICE_RX] = 44,
-    [SND_DEVICE_IN_CAPTURE_FM] = 0,
     [SND_DEVICE_IN_USB_HEADSET_MIC] = 44,
     [SND_DEVICE_IN_VOICE_USB_HEADSET_MIC] = 44,
     [SND_DEVICE_IN_UNPROCESSED_USB_HEADSET_MIC] = 44,
@@ -479,6 +480,11 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_HANDSET_QMIC] = 125,
     [SND_DEVICE_IN_HANDSET_TMIC_AEC] = 125, /* override this for new target to 140 */
     [SND_DEVICE_IN_HANDSET_QMIC_AEC] = 125, /* override this for new target to 140 */
+    [SND_DEVICE_IN_CAMCORDER_INVERT_LANDSCAPE] = 61,
+    [SND_DEVICE_IN_CAMCORDER_PORTRAIT] = 61,
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE] = 61,
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE] = 61,
+    [SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT] = 61,
 };
 
 // Platform specific backend bit width table
@@ -566,7 +572,7 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_BT_SCO_MIC_NREC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_BT_SCO_MIC_WB)},
     {TO_NAME_INDEX(SND_DEVICE_IN_BT_SCO_MIC_WB_NREC)},
-    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_MIC)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_LANDSCAPE)},
 
     {TO_NAME_INDEX(SND_DEVICE_IN_VOICE_DMIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_VOICE_DMIC_TMUS)},
@@ -607,8 +613,13 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_QMIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC_AEC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_QMIC_AEC)},
-
-    {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_FM)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_INVERT_LANDSCAPE)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_PORTRAIT)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT)},
+    /* For legacy xml file parsing */
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_MIC)},
 };
 
 static char * backend_tag_table[SND_DEVICE_MAX] = {0};
@@ -1211,7 +1222,6 @@ static void set_platform_defaults(struct platform_data * my_data)
     backend_tag_table[SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = strdup("bt-sco-wb");
     backend_tag_table[SND_DEVICE_OUT_VOICE_TX] = strdup("afe-proxy");
     backend_tag_table[SND_DEVICE_IN_VOICE_RX] = strdup("afe-proxy");
-    backend_tag_table[SND_DEVICE_IN_CAPTURE_FM] = strdup("capture-fm");
 
     backend_tag_table[SND_DEVICE_OUT_USB_HEADSET] = strdup("usb-headset");
     backend_tag_table[SND_DEVICE_OUT_VOICE_USB_HEADSET] = strdup("usb-headset");
@@ -1299,7 +1309,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_IN_HANDSET_DMIC_STEREO] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HEADSET_MIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HEADSET_MIC_AEC] = strdup("SLIMBUS_0_TX");
-    hw_interface_table[SND_DEVICE_IN_CAMCORDER_MIC] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_LANDSCAPE] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_VOICE_REC_MIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_VOICE_REC_MIC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_VOICE_REC_MIC_AEC] = strdup("SLIMBUS_0_TX");
@@ -1341,6 +1351,11 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_IN_HANDSET_QMIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_TMIC_AEC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_QMIC_AEC] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_INVERT_LANDSCAPE] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_PORTRAIT] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT] = strdup("SLIMBUS_0_TX");
     my_data->max_mic_count = PLATFORM_DEFAULT_MIC_COUNT;
 }
 
@@ -2946,7 +2961,30 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
     } else if (source == AUDIO_SOURCE_CAMCORDER) {
         if (in_device & AUDIO_DEVICE_IN_BUILTIN_MIC ||
             in_device & AUDIO_DEVICE_IN_BACK_MIC) {
-            snd_device = SND_DEVICE_IN_CAMCORDER_MIC;
+            switch (adev->camera_orientation) {
+            case CAMERA_BACK_LANDSCAPE:
+                snd_device = SND_DEVICE_IN_CAMCORDER_LANDSCAPE;
+                break;
+            case CAMERA_BACK_INVERT_LANDSCAPE:
+                snd_device = SND_DEVICE_IN_CAMCORDER_INVERT_LANDSCAPE;
+                break;
+            case CAMERA_BACK_PORTRAIT:
+                snd_device = SND_DEVICE_IN_CAMCORDER_PORTRAIT;
+                break;
+            case CAMERA_FRONT_LANDSCAPE:
+                snd_device = SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE;
+                break;
+            case CAMERA_FRONT_INVERT_LANDSCAPE:
+                snd_device = SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE;
+                break;
+            case CAMERA_FRONT_PORTRAIT:
+                snd_device = SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT;
+                break;
+            default:
+                ALOGW("%s: invalid camera orientation %08x", __func__, adev->camera_orientation);
+                snd_device = SND_DEVICE_IN_CAMCORDER_LANDSCAPE;
+                break;
+            }
         }
     } else if (source == AUDIO_SOURCE_VOICE_RECOGNITION) {
         if (in_device & AUDIO_DEVICE_IN_BUILTIN_MIC) {
@@ -3094,8 +3132,6 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 }
             }
         }
-    } else if (source == AUDIO_SOURCE_FM_TUNER) {
-        snd_device = SND_DEVICE_IN_CAPTURE_FM;
     } else if (source == AUDIO_SOURCE_DEFAULT) {
         goto exit;
     }
@@ -3505,24 +3541,6 @@ int64_t platform_render_latency(audio_usecase_t usecase)
             return MMAP_PLATFORM_DELAY;
         default:
             return 0;
-    }
-}
-
-int platform_update_usecase_from_source(int source, int usecase)
-{
-    ALOGV("%s: input source :%d", __func__, source);
-
-    switch(source) {
-        case AUDIO_SOURCE_FM_TUNER:
-            return USECASE_AUDIO_RECORD_FM_VIRTUAL;
-        case AUDIO_SOURCE_VOICE_UPLINK:
-            return USECASE_INCALL_REC_UPLINK;
-        case AUDIO_SOURCE_VOICE_DOWNLINK:
-            return USECASE_INCALL_REC_DOWNLINK;
-        case AUDIO_SOURCE_VOICE_CALL:
-            return USECASE_INCALL_REC_UPLINK_AND_DOWNLINK;
-        default:
-            return usecase;
     }
 }
 
