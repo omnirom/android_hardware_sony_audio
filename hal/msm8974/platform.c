@@ -195,6 +195,8 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
                               AUDIO_RECORD_PCM_DEVICE},
     [USECASE_AUDIO_RECORD_LOW_LATENCY] = {LOWLATENCY_PCM_DEVICE,
                                           LOWLATENCY_PCM_DEVICE},
+    [USECASE_AUDIO_RECORD_FM_VIRTUAL] = {MULTIMEDIA2_PCM_DEVICE,
+                                  MULTIMEDIA2_PCM_DEVICE},
 
     [USECASE_AUDIO_RECORD_MMAP] = {MMAP_RECORD_PCM_DEVICE,
             MMAP_RECORD_PCM_DEVICE},
@@ -363,6 +365,8 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_CAMCORDER_SELFIE_LANDSCAPE] = "camcorder-mic",
     [SND_DEVICE_IN_CAMCORDER_SELFIE_INVERT_LANDSCAPE] = "camcorder-mic",
     [SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT] = "camcorder-mic",
+
+    [SND_DEVICE_IN_CAPTURE_FM] = "capture-fm",
 };
 
 /* ACDB IDs (audio DSP path configuration IDs) for each sound device */
@@ -468,6 +472,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_UNPROCESSED_QUAD_MIC] = 125,
 
     [SND_DEVICE_IN_VOICE_RX] = 44,
+    [SND_DEVICE_IN_CAPTURE_FM] = 0,
     [SND_DEVICE_IN_USB_HEADSET_MIC] = 44,
     [SND_DEVICE_IN_VOICE_USB_HEADSET_MIC] = 44,
     [SND_DEVICE_IN_UNPROCESSED_USB_HEADSET_MIC] = 44,
@@ -620,6 +625,8 @@ static const struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_SELFIE_PORTRAIT)},
     /* For legacy xml file parsing */
     {TO_NAME_INDEX(SND_DEVICE_IN_CAMCORDER_MIC)},
+
+    {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_FM)},
 };
 
 static char * backend_tag_table[SND_DEVICE_MAX] = {0};
@@ -1222,6 +1229,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     backend_tag_table[SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = strdup("bt-sco-wb");
     backend_tag_table[SND_DEVICE_OUT_VOICE_TX] = strdup("afe-proxy");
     backend_tag_table[SND_DEVICE_IN_VOICE_RX] = strdup("afe-proxy");
+    backend_tag_table[SND_DEVICE_IN_CAPTURE_FM] = strdup("capture-fm");
 
     backend_tag_table[SND_DEVICE_OUT_USB_HEADSET] = strdup("usb-headset");
     backend_tag_table[SND_DEVICE_OUT_VOICE_USB_HEADSET] = strdup("usb-headset");
@@ -3132,6 +3140,8 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 }
             }
         }
+    } else if (source == AUDIO_SOURCE_FM_TUNER) {
+        snd_device = SND_DEVICE_IN_CAPTURE_FM;
     } else if (source == AUDIO_SOURCE_DEFAULT) {
         goto exit;
     }
@@ -3541,6 +3551,24 @@ int64_t platform_render_latency(audio_usecase_t usecase)
             return MMAP_PLATFORM_DELAY;
         default:
             return 0;
+    }
+}
+
+int platform_update_usecase_from_source(int source, int usecase)
+{
+    ALOGV("%s: input source :%d", __func__, source);
+
+    switch(source) {
+        case AUDIO_SOURCE_FM_TUNER:
+            return USECASE_AUDIO_RECORD_FM_VIRTUAL;
+        case AUDIO_SOURCE_VOICE_UPLINK:
+            return USECASE_INCALL_REC_UPLINK;
+        case AUDIO_SOURCE_VOICE_DOWNLINK:
+            return USECASE_INCALL_REC_DOWNLINK;
+        case AUDIO_SOURCE_VOICE_CALL:
+            return USECASE_INCALL_REC_UPLINK_AND_DOWNLINK;
+        default:
+            return usecase;
     }
 }
 
