@@ -1,4 +1,4 @@
-ifneq ($(filter msm8974 msm8226 msm8084 msm8952 msm8992 msm8994 msm8996 msm8909 msm8998 sdm660 sdm845 sdm710,$(TARGET_BOARD_PLATFORM)),)
+ifneq ($(filter msm8974 msm8226 msm8084 msm8952 msm8992 msm8994 msm8996 msm8909 msm8998 sdm660 sdm845 sdm710 sm8150,$(TARGET_BOARD_PLATFORM)),)
 
 LOCAL_PATH:= $(call my-dir)
 
@@ -44,13 +44,12 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
-
 include $(BUILD_SHARED_LIBRARY)
 endif
 
 ################################################################################
 
-ifneq ($(filter msm8952 msm8992 msm8994 msm8996 msm8909 msm8998 sdm660 sdm845 sdm710,$(TARGET_BOARD_PLATFORM)),)
+ifneq ($(filter msm8952 msm8992 msm8994 msm8996 msm8909 msm8998 sdm660 sdm845 sdm710 sm8150,$(TARGET_BOARD_PLATFORM)),)
 
 include $(CLEAR_VARS)
 
@@ -83,7 +82,6 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
-
 include $(BUILD_SHARED_LIBRARY)
 
 endif
